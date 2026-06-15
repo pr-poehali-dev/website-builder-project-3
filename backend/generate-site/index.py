@@ -48,18 +48,16 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта».
 """
 
+    full_prompt = f"{system_prompt}\n\nСоздай структуру сайта: {prompt}"
+
     request_data = json.dumps({
-        'model': 'gpt-4o',
-        'messages': [
-            {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
-        ],
-        'temperature': 0.7,
-        'max_tokens': 800,
+        'model': 'gpt-4o-mini',
+        'input': full_prompt,
+        'store': False,
     }).encode('utf-8')
 
     req = urllib.request.Request(
-        'https://api.openai.com/v1/chat/completions',
+        'https://api.openai.com/v1/responses',
         data=request_data,
         headers={
             'Authorization': f'Bearer {api_key}',
@@ -71,8 +69,13 @@ def handler(event: dict, context) -> dict:
     with urllib.request.urlopen(req, timeout=25) as resp:
         result = json.loads(resp.read().decode('utf-8'))
 
-    content = result['choices'][0]['message']['content'].strip()
-    site_data = json.loads(content)
+    content = result['output'][0]['content'][0]['text'].strip()
+    # Убираем возможные markdown-обёртки
+    if content.startswith('```'):
+        content = content.split('```')[1]
+        if content.startswith('json'):
+            content = content[4:]
+    site_data = json.loads(content.strip())
 
     return {
         'statusCode': 200,
