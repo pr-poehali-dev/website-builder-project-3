@@ -66,13 +66,23 @@ const Index = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       });
-      const data: SiteResult = await resp.json();
+      const data = await resp.json();
       stageTimer.forEach(clearTimeout);
-      setResult(data);
+      if (!resp.ok || data.error) {
+        setErrorMsg(data.error || 'Ошибка от AI. Проверьте ключ OpenAI и баланс аккаунта.');
+        setPhase('error');
+        return;
+      }
+      if (!data.sections || !Array.isArray(data.sections)) {
+        setErrorMsg('AI вернул неожиданный ответ. Попробуйте ещё раз.');
+        setPhase('error');
+        return;
+      }
+      setResult(data as SiteResult);
       setPhase('done');
     } catch {
       stageTimer.forEach(clearTimeout);
-      setErrorMsg('Не удалось получить ответ от AI. Попробуйте ещё раз.');
+      setErrorMsg('Не удалось связаться с сервером. Попробуйте ещё раз.');
       setPhase('error');
     }
   };
