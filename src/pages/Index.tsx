@@ -38,23 +38,57 @@ const palettes: Record<string, { sections: Section[]; accent: string; name: stri
   },
 };
 
+type SiteResult = {
+  name: string;
+  tagline: string;
+  palette: string;
+  sections: { tag: string; description: string }[];
+};
+
+const sectionColors = [
+  'from-fuchsia-500/30 to-purple-600/30',
+  'from-cyan-400/30 to-blue-500/30',
+  'from-pink-500/30 to-rose-500/30',
+  'from-emerald-400/30 to-teal-500/30',
+  'from-amber-400/30 to-orange-500/30',
+  'from-violet-500/30 to-indigo-600/30',
+  'from-sky-400/30 to-cyan-500/30',
+];
+
 const Index = () => {
   const [active, setActive] = useState('Главная');
   const [prompt, setPrompt] = useState('');
-  const [phase, setPhase] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [stage, setStage] = useState(0);
+  const [result, setResult] = useState<SiteResult | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const generate = () => {
+  const generate = async () => {
     if (!prompt.trim() || phase === 'loading') return;
     setPhase('loading');
     setStage(0);
-    genStages.forEach((_, i) => {
-      setTimeout(() => setStage(i), i * 800);
-    });
-    setTimeout(() => setPhase('done'), genStages.length * 800);
-  };
+    setResult(null);
 
-  const result = palettes.default;
+    const stageTimer = genStages.map((_, i) =>
+      setTimeout(() => setStage(i), i * 900)
+    );
+
+    try {
+      const resp = await fetch('https://functions.poehali.dev/b374dc4b-ef26-4b6e-8152-1e0c95fe8081', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      const data: SiteResult = await resp.json();
+      stageTimer.forEach(clearTimeout);
+      setResult(data);
+      setPhase('done');
+    } catch {
+      stageTimer.forEach(clearTimeout);
+      setErrorMsg('Не удалось получить ответ от AI. Попробуйте ещё раз.');
+      setPhase('error');
+    }
+  };
 
   return (
     <div className="min-h-screen mesh-bg text-foreground overflow-x-hidden">
@@ -193,26 +227,44 @@ const Index = () => {
                 </div>
               )}
 
-              {phase === 'done' && (
-                <div className="space-y-2.5">
-                  <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-white">
-                    <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500">
-                      <Icon name="Check" size={14} className="text-white" />
-                    </span>
-                    {result.name} готов
+              {phase === 'error' && (
+                <div className="flex h-[200px] flex-col items-center justify-center gap-3 text-center">
+                  <Icon name="AlertCircle" size={28} className="text-rose-400" />
+                  <p className="text-sm text-muted-foreground">{errorMsg}</p>
+                  <button onClick={() => setPhase('idle')} className="text-sm text-white underline">Попробовать снова</button>
+                </div>
+              )}
+
+              {phase === 'done' && result && (
+                <div className="space-y-2">
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                      <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500">
+                        <Icon name="Check" size={14} className="text-white" />
+                      </span>
+                      {result.name}
+                    </div>
+                    {result.tagline && (
+                      <p className="mt-1 pl-8 text-xs text-muted-foreground">{result.tagline}</p>
+                    )}
                   </div>
                   {result.sections.map((s, i) => (
                     <div
                       key={s.tag}
-                      className={`animate-float-up flex items-center gap-3 rounded-xl border border-white/10 bg-gradient-to-r ${s.color} px-4 py-2.5`}
+                      className={`animate-float-up rounded-xl border border-white/10 bg-gradient-to-r ${sectionColors[i % sectionColors.length]} px-4 py-2.5`}
                       style={{ animationDelay: `${i * 0.08}s` }}
                     >
-                      <Icon name="GripVertical" size={14} className="text-white/50" />
-                      <span className="text-sm text-white">{s.tag}</span>
+                      <div className="flex items-center gap-2">
+                        <Icon name="GripVertical" size={14} className="text-white/50" />
+                        <span className="text-sm font-medium text-white">{s.tag}</span>
+                      </div>
+                      {s.description && (
+                        <p className="mt-0.5 pl-5 text-xs text-white/60">{s.description}</p>
+                      )}
                     </div>
                   ))}
                   <button
-                    onClick={() => { setPhase('idle'); setPrompt(''); }}
+                    onClick={() => { setPhase('idle'); setPrompt(''); setResult(null); }}
                     className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 py-2 text-sm text-muted-foreground transition-colors hover:text-white"
                   >
                     <Icon name="RotateCcw" size={14} /> Сгенерировать заново

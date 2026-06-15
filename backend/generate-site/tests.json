@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Генерация структуры сайта для кофейни",
+      "method": "POST",
+      "path": "/",
+      "body": {"prompt": "Кофейня в центре города"},
+      "expectedStatus": 200,
+      "expectedBody": {"name": "string", "sections": []},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
