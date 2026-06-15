@@ -23,20 +23,7 @@ const ideas = ['Кофейня в центре города', 'Портфоли�
 
 const genStages = ['Анализирую идею…', 'Подбираю палитру и шрифты…', 'Генерирую секции и тексты…', 'Собираю макет…'];
 
-type Section = { tag: string; color: string };
-const palettes: Record<string, { sections: Section[]; accent: string; name: string }> = {
-  default: {
-    name: 'Готовый макет',
-    accent: 'from-fuchsia-500 to-cyan-400',
-    sections: [
-      { tag: 'Шапка с меню', color: 'from-fuchsia-500/30 to-purple-600/30' },
-      { tag: 'Hero-баннер', color: 'from-cyan-400/30 to-blue-500/30' },
-      { tag: 'Преимущества', color: 'from-pink-500/30 to-rose-500/30' },
-      { tag: 'Галерея', color: 'from-emerald-400/30 to-teal-500/30' },
-      { tag: 'Форма заявки', color: 'from-amber-400/30 to-orange-500/30' },
-    ],
-  },
-};
+
 
 type SiteResult = {
   name: string;
