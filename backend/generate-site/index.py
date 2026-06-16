@@ -67,8 +67,16 @@ def handler(event: dict, context) -> dict:
         method='POST',
     )
 
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        result = json.loads(resp.read().decode('utf-8'))
+    try:
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        return {
+            'statusCode': 502,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'Anthropic {e.code}: {error_body}'}),
+        }
 
     content = result['content'][0]['text'].strip()
     if content.startswith('```'):
