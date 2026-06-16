@@ -29,7 +29,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Описание сайта не передано'}),
         }
 
-    api_key = os.environ['ANTHROPIC_API_KEY']
+    api_key = os.environ['OPENROUTER_API_KEY']
 
     system_prompt = """Ты — AI-конструктор сайтов. Пользователь описывает сайт, ты возвращаешь JSON со структурой.
 
@@ -49,21 +49,21 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'model': 'claude-3-haiku-20240307',
+        'model': 'anthropic/claude-3-haiku',
         'max_tokens': 1024,
-        'system': system_prompt,
         'messages': [
+            {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
         ],
     }).encode('utf-8')
 
     req = urllib.request.Request(
-        'https://api.anthropic.com/v1/messages',
+        'https://openrouter.ai/api/v1/chat/completions',
         data=request_data,
         headers={
-            'x-api-key': api_key,
-            'anthropic-version': '2023-06-01',
+            'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://poehali.dev',
         },
         method='POST',
     )
@@ -73,14 +73,14 @@ def handler(event: dict, context) -> dict:
             result = json.loads(resp.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
-        print(f'Claude error {e.code}: {error_body}')
+        print(f'OpenRouter error {e.code}: {error_body}')
         return {
             'statusCode': 502,
             'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Claude {e.code}: {error_body}'}),
+            'body': json.dumps({'error': f'OpenRouter {e.code}: {error_body}'}),
         }
 
-    content = result['content'][0]['text'].strip()
+    content = result['choices'][0]['message']['content'].strip()
     if content.startswith('```'):
         content = content.split('```')[1]
         if content.startswith('json'):
