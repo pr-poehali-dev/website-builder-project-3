@@ -73,6 +73,7 @@ def handler(event: dict, context) -> dict:
             result = json.loads(resp.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
+        print(f'Groq error {e.code}: {error_body}')
         return {
             'statusCode': 502,
             'headers': {'Access-Control-Allow-Origin': '*'},
