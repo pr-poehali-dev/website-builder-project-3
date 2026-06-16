@@ -4,7 +4,7 @@ import urllib.request
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта на основе описания пользователя через GPT-4o."""
+    """Генерирует структуру сайта на основе описания пользователя через Claude claude-opus-4-5."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
@@ -28,7 +28,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Описание сайта не передано'}),
         }
 
-    api_key = os.environ['OPENAI_API_KEY']
+    api_key = os.environ['ANTHROPIC_API_KEY']
 
     system_prompt = """Ты — AI-конструктор сайтов. Пользователь описывает сайт, ты возвращаешь JSON со структурой.
 
@@ -45,22 +45,23 @@ def handler(event: dict, context) -> dict:
 }
 
 Секций должно быть от 4 до 7. Названия секций — на русском языке, конкретные и понятные.
-Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта».
-"""
-
-    full_prompt = f"{system_prompt}\n\nСоздай структуру сайта: {prompt}"
+Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'model': 'gpt-4o-mini',
-        'input': full_prompt,
-        'store': False,
+        'model': 'claude-opus-4-5',
+        'max_tokens': 1024,
+        'system': system_prompt,
+        'messages': [
+            {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'}
+        ],
     }).encode('utf-8')
 
     req = urllib.request.Request(
-        'https://api.openai.com/v1/responses',
+        'https://api.anthropic.com/v1/messages',
         data=request_data,
         headers={
-            'Authorization': f'Bearer {api_key}',
+            'x-api-key': api_key,
+            'anthropic-version': '2023-06-01',
             'Content-Type': 'application/json',
         },
         method='POST',
@@ -69,8 +70,7 @@ def handler(event: dict, context) -> dict:
     with urllib.request.urlopen(req, timeout=25) as resp:
         result = json.loads(resp.read().decode('utf-8'))
 
-    content = result['output'][0]['content'][0]['text'].strip()
-    # Убираем возможные markdown-обёртки
+    content = result['content'][0]['text'].strip()
     if content.startswith('```'):
         content = content.split('```')[1]
         if content.startswith('json'):
