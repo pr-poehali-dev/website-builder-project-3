@@ -49,7 +49,7 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'model': 'claude-haiku-4-5',
+        'model': 'claude-3-haiku-20240307',
         'max_tokens': 1024,
         'system': system_prompt,
         'messages': [
