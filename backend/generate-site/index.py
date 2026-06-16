@@ -1,40 +1,11 @@
 import json
 import os
-import time
 import urllib.request
 import urllib.error
 
-MODELS = [
-    'nousresearch/hermes-3-llama-3.1-405b:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-coder:free',
-]
-
-
-def call_openrouter(api_key, model, messages):
-    request_data = json.dumps({
-        'model': model,
-        'messages': messages,
-        'temperature': 0.7,
-        'max_tokens': 1024,
-    }).encode('utf-8')
-
-    req = urllib.request.Request(
-        'https://openrouter.ai/api/v1/chat/completions',
-        data=request_data,
-        headers={
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://poehali.dev',
-        },
-        method='POST',
-    )
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        return json.loads(resp.read().decode('utf-8'))
-
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта через OpenRouter с автоматическим переключением моделей."""
+    """Генерирует структуру сайта на основе описания пользователя через Groq."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
@@ -58,7 +29,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Описание сайта не передано'}),
         }
 
-    api_key = os.environ['OPENROUTER_API_KEY']
+    api_key = os.environ['GROQ_API_KEY']
 
     system_prompt = """Ты — AI-конструктор сайтов. Пользователь описывает сайт, ты возвращаешь JSON со структурой.
 
@@ -77,40 +48,46 @@ def handler(event: dict, context) -> dict:
 Секций должно быть от 4 до 7. Названия секций — на русском языке, конкретные и понятные.
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
-    messages = [
-        {'role': 'system', 'content': system_prompt},
-        {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
-    ]
+    request_data = json.dumps({
+        'model': 'llama-3.3-70b-versatile',
+        'messages': [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
+        ],
+        'temperature': 0.7,
+        'max_tokens': 1024,
+    }).encode('utf-8')
 
-    last_error = None
-    for model in MODELS:
-        for attempt in range(2):
-            try:
-                result = call_openrouter(api_key, model, messages)
-                content = result['choices'][0]['message']['content'].strip()
-                if content.startswith('```'):
-                    content = content.split('```')[1]
-                    if content.startswith('json'):
-                        content = content[4:]
-                site_data = json.loads(content.strip())
-                return {
-                    'statusCode': 200,
-                    'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
-                    'body': json.dumps(site_data, ensure_ascii=False),
-                }
-            except urllib.error.HTTPError as e:
-                error_body = e.read().decode('utf-8')
-                last_error = f'{model} {e.code}: {error_body}'
-                if e.code == 429 and attempt == 0:
-                    time.sleep(5)
-                else:
-                    break
-            except Exception as e:
-                last_error = str(e)
-                break
+    req = urllib.request.Request(
+        'https://api.groq.com/openai/v1/chat/completions',
+        data=request_data,
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        method='POST',
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        return {
+            'statusCode': 502,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'Groq {e.code}: {error_body}'}),
+        }
+
+    content = result['choices'][0]['message']['content'].strip()
+    if content.startswith('```'):
+        content = content.split('```')[1]
+        if content.startswith('json'):
+            content = content[4:]
+    site_data = json.loads(content.strip())
 
     return {
-        'statusCode': 502,
-        'headers': {'Access-Control-Allow-Origin': '*'},
-        'body': json.dumps({'error': f'Все модели недоступны: {last_error}'}),
+        'statusCode': 200,
+        'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+        'body': json.dumps(site_data, ensure_ascii=False),
     }
