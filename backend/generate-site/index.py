@@ -49,7 +49,7 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'model': 'meta-llama/llama-3.3-70b-instruct:free',
+        'model': 'nousresearch/hermes-3-llama-3.1-405b:free',
         'messages': [
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
