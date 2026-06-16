@@ -5,7 +5,7 @@ import urllib.error
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта на основе описания пользователя через Groq."""
+    """Генерирует структуру сайта на основе описания пользователя через Anthropic Claude."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
