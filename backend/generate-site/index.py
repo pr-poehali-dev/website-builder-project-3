@@ -2,7 +2,7 @@ import json
 import os
 import urllib.request
 import urllib.error
-# deploy
+# deploy v2
 
 
 def handler(event: dict, context) -> dict:
@@ -50,12 +50,11 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'system_instruction': {'parts': [{'text': system_prompt}]},
-        'contents': [{'parts': [{'text': f'Создай структуру сайта: {prompt}'}]}],
+        'contents': [{'parts': [{'text': f'{system_prompt}\n\nСоздай структуру сайта: {prompt}'}]}],
         'generationConfig': {'maxOutputTokens': 1024, 'temperature': 0.7},
     }).encode('utf-8')
 
-    url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}'
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}'
 
     req = urllib.request.Request(
         url,
