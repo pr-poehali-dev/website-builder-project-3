@@ -5,7 +5,7 @@ import urllib.error
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта на основе описания пользователя через Google Gemini."""
+    """Генерирует структуру сайта на основе описания пользователя через Groq."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
@@ -29,7 +29,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Описание сайта не передано'}),
         }
 
-    api_key = os.environ['GEMINI_API_KEY']
+    api_key = os.environ['GROQ_API_KEY']
 
     system_prompt = """Ты — AI-конструктор сайтов. Пользователь описывает сайт, ты возвращаешь JSON со структурой.
 
@@ -49,17 +49,21 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'system_instruction': {'parts': [{'text': system_prompt}]},
-        'contents': [{'parts': [{'text': f'Создай структуру сайта: {prompt}'}]}],
-        'generationConfig': {'maxOutputTokens': 1024, 'temperature': 0.7},
+        'model': 'llama3-8b-8192',
+        'max_tokens': 1024,
+        'messages': [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
+        ],
     }).encode('utf-8')
 
-    url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}'
-
     req = urllib.request.Request(
-        url,
+        'https://api.groq.com/openai/v1/chat/completions',
         data=request_data,
-        headers={'Content-Type': 'application/json'},
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
         method='POST',
     )
 
@@ -68,14 +72,14 @@ def handler(event: dict, context) -> dict:
             result = json.loads(resp.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
-        print(f'Gemini error {e.code}: {error_body}')
+        print(f'Groq error {e.code}: {error_body}')
         return {
             'statusCode': 502,
             'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Gemini {e.code}: {error_body}'}),
+            'body': json.dumps({'error': f'Groq {e.code}: {error_body}'}),
         }
 
-    content = result['candidates'][0]['content']['parts'][0]['text'].strip()
+    content = result['choices'][0]['message']['content'].strip()
     if content.startswith('```'):
         content = content.split('```')[1]
         if content.startswith('json'):
