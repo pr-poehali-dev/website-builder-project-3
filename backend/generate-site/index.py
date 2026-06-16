@@ -4,7 +4,7 @@ import urllib.request
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта на основе описания пользователя через Claude claude-opus-4-5."""
+    """Генерирует структуру сайта на основе описания пользователя через Claude Opus 4."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
