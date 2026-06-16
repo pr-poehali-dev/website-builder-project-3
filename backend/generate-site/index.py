@@ -5,7 +5,7 @@ import urllib.error
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта на основе описания пользователя через Groq."""
+    """Генерирует структуру сайта на основе описания пользователя через Claude."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
@@ -29,7 +29,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Описание сайта не передано'}),
         }
 
-    api_key = os.environ['GROQ_API_KEY']
+    api_key = os.environ['ANTHROPIC_API_KEY']
 
     system_prompt = """Ты — AI-конструктор сайтов. Пользователь описывает сайт, ты возвращаешь JSON со структурой.
 
@@ -49,20 +49,20 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'model': 'llama-3.3-70b-versatile',
+        'model': 'claude-haiku-4-5',
+        'max_tokens': 1024,
+        'system': system_prompt,
         'messages': [
-            {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
         ],
-        'temperature': 0.7,
-        'max_tokens': 1024,
     }).encode('utf-8')
 
     req = urllib.request.Request(
-        'https://api.groq.com/openai/v1/chat/completions',
+        'https://api.anthropic.com/v1/messages',
         data=request_data,
         headers={
-            'Authorization': f'Bearer {api_key}',
+            'x-api-key': api_key,
+            'anthropic-version': '2023-06-01',
             'Content-Type': 'application/json',
         },
         method='POST',
@@ -73,14 +73,14 @@ def handler(event: dict, context) -> dict:
             result = json.loads(resp.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
-        print(f'Groq error {e.code}: {error_body}')
+        print(f'Claude error {e.code}: {error_body}')
         return {
             'statusCode': 502,
             'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Groq {e.code}: {error_body}'}),
+            'body': json.dumps({'error': f'Claude {e.code}: {error_body}'}),
         }
 
-    content = result['choices'][0]['message']['content'].strip()
+    content = result['content'][0]['text'].strip()
     if content.startswith('```'):
         content = content.split('```')[1]
         if content.startswith('json'):
