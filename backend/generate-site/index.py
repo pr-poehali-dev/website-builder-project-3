@@ -2,11 +2,10 @@ import json
 import os
 import urllib.request
 import urllib.error
-# v2
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта на основе описания пользователя через Groq."""
+    """Генерирует структуру сайта на основе описания пользователя через OpenRouter."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
@@ -30,7 +29,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Описание сайта не передано'}),
         }
 
-    api_key = os.environ['GROQ_API_KEY']
+    api_key = os.environ['OPENROUTER_API_KEY']
 
     system_prompt = """Ты — AI-конструктор сайтов. Пользователь описывает сайт, ты возвращаешь JSON со структурой.
 
@@ -50,7 +49,7 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'model': 'llama-3.3-70b-versatile',
+        'model': 'meta-llama/llama-3.3-70b-instruct:free',
         'messages': [
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
@@ -60,11 +59,12 @@ def handler(event: dict, context) -> dict:
     }).encode('utf-8')
 
     req = urllib.request.Request(
-        'https://api.groq.com/openai/v1/chat/completions',
+        'https://openrouter.ai/api/v1/chat/completions',
         data=request_data,
         headers={
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://poehali.dev',
         },
         method='POST',
     )
@@ -77,7 +77,7 @@ def handler(event: dict, context) -> dict:
         return {
             'statusCode': 502,
             'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Groq {e.code}: {error_body}'}),
+            'body': json.dumps({'error': f'OpenRouter {e.code}: {error_body}'}),
         }
 
     content = result['choices'][0]['message']['content'].strip()
