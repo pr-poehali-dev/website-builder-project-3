@@ -1,10 +1,11 @@
 import json
 import os
 import urllib.request
+import urllib.error
 
 
 def handler(event: dict, context) -> dict:
-    """Генерирует структуру сайта на основе описания пользователя через Claude Opus 4."""
+    """Генерирует структуру сайта на основе описания пользователя через Groq."""
 
     if event.get('httpMethod') == 'OPTIONS':
         return {
@@ -28,7 +29,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Описание сайта не передано'}),
         }
 
-    api_key = os.environ['ANTHROPIC_API_KEY']
+    api_key = os.environ['GROQ_API_KEY']
 
     system_prompt = """Ты — AI-конструктор сайтов. Пользователь описывает сайт, ты возвращаешь JSON со структурой.
 
@@ -48,20 +49,20 @@ def handler(event: dict, context) -> dict:
 Примеры секций: «Шапка с меню», «Главный баннер», «О нас», «Наши услуги», «Галерея работ», «Отзывы клиентов», «Форма заявки», «Контакты и карта»."""
 
     request_data = json.dumps({
-        'model': 'claude-opus-4-5',
-        'max_tokens': 1024,
-        'system': system_prompt,
+        'model': 'llama-3.3-70b-versatile',
         'messages': [
-            {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'}
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': f'Создай структуру сайта: {prompt}'},
         ],
+        'temperature': 0.7,
+        'max_tokens': 1024,
     }).encode('utf-8')
 
     req = urllib.request.Request(
-        'https://api.anthropic.com/v1/messages',
+        'https://api.groq.com/openai/v1/chat/completions',
         data=request_data,
         headers={
-            'x-api-key': api_key,
-            'anthropic-version': '2023-06-01',
+            'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json',
         },
         method='POST',
@@ -75,10 +76,10 @@ def handler(event: dict, context) -> dict:
         return {
             'statusCode': 502,
             'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Anthropic {e.code}: {error_body}'}),
+            'body': json.dumps({'error': f'Groq {e.code}: {error_body}'}),
         }
 
-    content = result['content'][0]['text'].strip()
+    content = result['choices'][0]['message']['content'].strip()
     if content.startswith('```'):
         content = content.split('```')[1]
         if content.startswith('json'):
