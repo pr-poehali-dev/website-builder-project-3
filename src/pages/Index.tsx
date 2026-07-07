@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
-
-const navItems = ['Главная', 'Редактор', 'Шаблоны', 'Проекты', 'Публикация', 'Аналитика', 'Профиль', 'Поддержка'];
+import Navbar from '@/components/layout/Navbar';
+import { createSiteId, saveSite } from '@/lib/sites';
 
 const features = [
   { icon: 'Sparkles', title: 'AI-генерация', text: 'Опишите идею словами — нейросеть соберёт текст, картинки и дизайн за секунды.', color: 'from-fuchsia-500 to-purple-600' },
@@ -43,7 +44,7 @@ const sectionColors = [
 ];
 
 const Index = () => {
-  const [active, setActive] = useState('Главная');
+  const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
   const [phase, setPhase] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [stage, setStage] = useState(0);
@@ -87,6 +88,23 @@ const Index = () => {
     }
   };
 
+  const goToEditor = () => {
+    if (!result) return;
+    const now = Date.now();
+    const site = {
+      id: createSiteId(),
+      name: result.name,
+      tagline: result.tagline,
+      palette: result.palette,
+      sections: result.sections,
+      createdAt: now,
+      updatedAt: now,
+      published: false,
+    };
+    saveSite(site);
+    navigate(`/editor/${site.id}`);
+  };
+
   return (
     <div className="min-h-screen mesh-bg text-foreground overflow-x-hidden">
       {/* Floating blobs */}
@@ -95,33 +113,7 @@ const Index = () => {
         <div className="animate-blob absolute top-1/2 -right-24 h-96 w-96 rounded-full bg-accent/25 blur-3xl" style={{ animationDelay: '4s' }} />
       </div>
 
-      {/* Nav */}
-      <header className="sticky top-0 z-50 glass">
-        <div className="container flex items-center justify-between py-4">
-          <div className="flex items-center gap-2 font-display text-xl font-bold">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-cyan-400 glow">
-              <Icon name="Boxes" size={20} className="text-white" />
-            </span>
-            Konstr<span className="text-gradient">AI</span>
-          </div>
-          <nav className="hidden items-center gap-1 lg:flex">
-            {navItems.map((item) => (
-              <button
-                key={item}
-                onClick={() => setActive(item)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  active === item ? 'bg-white/10 text-white' : 'text-muted-foreground hover:text-white'
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </nav>
-          <button className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-105 glow">
-            Создать сайт
-          </button>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero */}
       <section className="container relative grid items-center gap-12 py-20 md:py-28 lg:grid-cols-2">
@@ -260,6 +252,12 @@ const Index = () => {
                       )}
                     </div>
                   ))}
+                  <button
+                    onClick={goToEditor}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] glow"
+                  >
+                    Перейти в редактор <Icon name="ArrowRight" size={16} />
+                  </button>
                   <button
                     onClick={() => { setPhase('idle'); setPrompt(''); setResult(null); }}
                     className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 py-2 text-sm text-muted-foreground transition-colors hover:text-white"
