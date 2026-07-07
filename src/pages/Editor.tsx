@@ -1,20 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import Navbar from '@/components/layout/Navbar';
 import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
+import LivePreview from '@/components/site-preview/LivePreview';
 import { getSite, getSites, saveSite, Site } from '@/lib/sites';
-
-const sectionColors = [
-  'from-fuchsia-500/30 to-purple-600/30',
-  'from-cyan-400/30 to-blue-500/30',
-  'from-pink-500/30 to-rose-500/30',
-  'from-emerald-400/30 to-teal-500/30',
-  'from-amber-400/30 to-orange-500/30',
-  'from-violet-500/30 to-indigo-600/30',
-  'from-sky-400/30 to-cyan-500/30',
-];
 
 type ChatMessage = { role: 'user' | 'assistant'; text: string };
 
@@ -252,19 +242,7 @@ const Editor = () => {
               </span>
             </div>
             <div className="flex-1 overflow-y-auto rounded-2xl bg-background/40">
-              <div className="border-b border-white/10 px-8 py-16 text-center">
-                <h2 className="font-display text-4xl font-black leading-tight">{site.name || 'Название сайта'}</h2>
-                <p className="mx-auto mt-4 max-w-md text-muted-foreground">{site.tagline || 'Tagline сайта появится здесь'}</p>
-              </div>
-              {site.sections.map((s, i) => (
-                <div
-                  key={i}
-                  className={`border-b border-white/5 bg-gradient-to-br ${sectionColors[i % sectionColors.length]} px-8 py-14 text-center`}
-                >
-                  <h3 className="font-display text-2xl font-bold text-white">{s.tag || 'Название секции'}</h3>
-                  <p className="mx-auto mt-3 max-w-lg text-sm text-white/70">{s.description || 'Описание секции'}</p>
-                </div>
-              ))}
+              <LivePreview site={site} />
             </div>
           </div>
         </div>
