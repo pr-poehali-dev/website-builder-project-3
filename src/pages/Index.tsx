@@ -1,6 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import Navbar from '@/components/layout/Navbar';
-import GenerateWizard from '@/components/generate/GenerateWizard';
 
 const features = [
   { icon: 'Sparkles', title: 'AI-генерация', text: 'Опишите идею словами — нейросеть соберёт текст, картинки и дизайн за секунды.', color: 'from-fuchsia-500 to-purple-600' },
@@ -19,6 +19,8 @@ const steps = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen mesh-bg text-foreground overflow-x-hidden">
       {/* Floating blobs */}
@@ -44,15 +46,12 @@ const Index = () => {
           </p>
           <div className="animate-float-up mt-9 flex flex-wrap gap-4" style={{ animationDelay: '0.3s' }}>
             <button
-              onClick={() => document.getElementById('generate-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              onClick={() => navigate('/generate')}
               className="rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 px-7 py-3.5 font-semibold text-white transition-transform hover:scale-105 glow"
             >
               Начать бесплатно
             </button>
-            <button
-              onClick={() => document.getElementById('generate-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-              className="rounded-full border border-white/20 bg-white/5 px-7 py-3.5 font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
-            >
+            <button className="rounded-full border border-white/20 bg-white/5 px-7 py-3.5 font-semibold text-white backdrop-blur transition-colors hover:bg-white/10">
               <Icon name="Play" size={16} className="mr-2 inline" />
               Смотреть демо
             </button>
@@ -64,10 +63,37 @@ const Index = () => {
           </div>
         </div>
 
-        <div id="generate-wizard" className="animate-float-up relative scroll-mt-24" style={{ animationDelay: '0.25s' }}>
+        <button
+          onClick={() => navigate('/generate')}
+          className="animate-float-up relative block w-full text-left"
+          style={{ animationDelay: '0.25s' }}
+        >
           <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-tr from-fuchsia-500/40 to-cyan-400/40 blur-2xl" />
-          <GenerateWizard />
-        </div>
+          <div className="glass overflow-hidden rounded-[2rem] p-6 shadow-2xl transition-transform hover:-translate-y-1">
+            <div className="mb-5 flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-rose-500/80" />
+              <span className="h-3 w-3 rounded-full bg-amber-400/80" />
+              <span className="h-3 w-3 rounded-full bg-emerald-400/80" />
+              <span className="ml-3 text-xs text-muted-foreground">AI-конструктор</span>
+            </div>
+            <label className="mb-3 flex items-center gap-2 text-sm font-medium text-white">
+              <Icon name="LayoutGrid" size={16} className="text-secondary" /> Какой сайт хотите создать?
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {['Бизнес и услуги', 'Интернет-магазин', 'Портфолио', 'Блог и медиа'].map((t) => (
+                <span
+                  key={t}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left text-sm text-white"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 py-3 text-sm font-semibold text-white">
+              Начать <Icon name="ArrowRight" size={16} />
+            </div>
+          </div>
+        </button>
       </section>
 
       {/* Features */}
@@ -110,7 +136,7 @@ const Index = () => {
           <h2 className="relative font-display text-4xl font-black md:text-6xl">Запустите сайт <span className="text-gradient">сегодня</span></h2>
           <p className="relative mx-auto mt-5 max-w-md text-muted-foreground">Никакого кода. Только идея и AI, который воплотит её в жизнь.</p>
           <button
-            onClick={() => document.getElementById('generate-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            onClick={() => navigate('/generate')}
             className="relative mt-9 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-10 py-4 font-semibold text-white transition-transform hover:scale-105 glow"
           >
             Создать сайт бесплатно

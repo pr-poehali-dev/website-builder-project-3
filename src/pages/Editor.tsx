@@ -92,7 +92,7 @@ const Editor = () => {
               <h2 className="font-display text-2xl font-bold">У вас пока нет проектов</h2>
               <p className="mt-2 text-muted-foreground">Опишите идею на главной — AI соберёт для вас первый макет.</p>
               <Link
-                to="/"
+                to="/generate"
                 className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-3 font-semibold text-white transition-transform hover:scale-105 glow"
               >
                 <Icon name="Sparkles" size={16} /> Создать сайт

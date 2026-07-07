@@ -39,7 +39,7 @@ const Navbar = () => {
           ))}
         </nav>
         <Link
-          to="/"
+          to="/generate"
           className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-105 glow"
         >
           Создать сайт

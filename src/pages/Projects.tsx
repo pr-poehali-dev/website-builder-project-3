@@ -26,7 +26,7 @@ const Projects = () => {
         <div className="mb-8 flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Мои проекты</h1>
           <Link
-            to="/"
+            to="/generate"
             className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-105 glow"
           >
             + Новый сайт
@@ -39,7 +39,7 @@ const Projects = () => {
             <h2 className="font-display text-2xl font-bold">Проектов пока нет</h2>
             <p className="mt-2 text-muted-foreground">Создайте свой первый сайт с помощью AI-конструктора.</p>
             <Link
-              to="/"
+              to="/generate"
               className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-3 font-semibold text-white transition-transform hover:scale-105 glow"
             >
               <Icon name="Sparkles" size={16} /> Создать первый сайт
