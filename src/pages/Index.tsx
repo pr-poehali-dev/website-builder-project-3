@@ -43,10 +43,16 @@ const Index = () => {
             Платформа для создания сайтов без кода. Опишите идею — нейросеть соберёт дизайн, контент и запустит проект.
           </p>
           <div className="animate-float-up mt-9 flex flex-wrap gap-4" style={{ animationDelay: '0.3s' }}>
-            <button className="rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 px-7 py-3.5 font-semibold text-white transition-transform hover:scale-105 glow">
+            <button
+              onClick={() => document.getElementById('generate-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              className="rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 px-7 py-3.5 font-semibold text-white transition-transform hover:scale-105 glow"
+            >
               Начать бесплатно
             </button>
-            <button className="rounded-full border border-white/20 bg-white/5 px-7 py-3.5 font-semibold text-white backdrop-blur transition-colors hover:bg-white/10">
+            <button
+              onClick={() => document.getElementById('generate-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              className="rounded-full border border-white/20 bg-white/5 px-7 py-3.5 font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
+            >
               <Icon name="Play" size={16} className="mr-2 inline" />
               Смотреть демо
             </button>
@@ -58,7 +64,7 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="animate-float-up relative" style={{ animationDelay: '0.25s' }}>
+        <div id="generate-wizard" className="animate-float-up relative scroll-mt-24" style={{ animationDelay: '0.25s' }}>
           <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-tr from-fuchsia-500/40 to-cyan-400/40 blur-2xl" />
           <GenerateWizard />
         </div>
@@ -103,7 +109,10 @@ const Index = () => {
           <div className="absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/40 blur-3xl" />
           <h2 className="relative font-display text-4xl font-black md:text-6xl">Запустите сайт <span className="text-gradient">сегодня</span></h2>
           <p className="relative mx-auto mt-5 max-w-md text-muted-foreground">Никакого кода. Только идея и AI, который воплотит её в жизнь.</p>
-          <button className="relative mt-9 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-10 py-4 font-semibold text-white transition-transform hover:scale-105 glow">
+          <button
+            onClick={() => document.getElementById('generate-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            className="relative mt-9 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-10 py-4 font-semibold text-white transition-transform hover:scale-105 glow"
+          >
             Создать сайт бесплатно
           </button>
         </div>
