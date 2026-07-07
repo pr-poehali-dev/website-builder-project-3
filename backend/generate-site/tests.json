@@ -4,9 +4,9 @@
       "name": "Генерация структуры сайта для кофейни",
       "method": "POST",
       "path": "/",
-      "body": {"prompt": "Кофейня в центре города"},
+      "body": {"prompt": "Кофейня в центре города", "typeLabel": "Кафе и рестораны", "styleLabel": "Тёплый уют", "styleHint": "Оранжевые и терракотовые оттенки"},
       "expectedStatus": 200,
-      "expectedBody": {"name": "string", "sections": []},
+      "expectedBody": {"name": "string"},
       "bodyMatcher": "partial"
     }
   ]

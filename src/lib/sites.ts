@@ -5,6 +5,8 @@ export type Site = {
   name: string;
   tagline: string;
   palette: string;
+  styleKey?: string;
+  typeKey?: string;
   sections: SiteSection[];
   createdAt: number;
   updatedAt: number;

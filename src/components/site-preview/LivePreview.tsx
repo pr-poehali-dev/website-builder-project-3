@@ -1,5 +1,6 @@
 import Icon from '@/components/ui/icon';
 import { Site, SiteSection } from '@/lib/sites';
+import { getSiteStyle, HeroLayout } from '@/lib/siteStyles';
 
 const paletteAccent: Record<string, string> = {
   'тёплая': 'from-amber-400 to-orange-500',
@@ -89,23 +90,89 @@ const Header = ({ site, sections, accent }: { site: Site; sections: SiteSection[
   );
 };
 
-const Hero = ({ heading, subheading, accent }: { heading: string; subheading: string; accent: string }) => (
-  <div className="grid gap-8 px-8 py-20 md:grid-cols-2 md:items-center">
-    <div>
-      <h2 className="font-display text-4xl font-black leading-tight text-white md:text-5xl">{heading}</h2>
-      <p className="mt-4 max-w-md text-white/70">{subheading}</p>
-      <div className="mt-7 flex gap-3">
-        <button className={`flex items-center gap-2 rounded-full bg-gradient-to-r ${accent} px-6 py-3 text-sm font-semibold text-white`}>
-          Начать <Icon name="ArrowRight" size={15} />
-        </button>
-        <button className="rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white/80">
-          Узнать больше
-        </button>
-      </div>
+const Hero = ({
+  heading,
+  subheading,
+  accent,
+  layout,
+}: {
+  heading: string;
+  subheading: string;
+  accent: string;
+  layout: HeroLayout;
+}) => {
+  const cta = (
+    <div className="mt-7 flex justify-center gap-3 md:justify-start">
+      <button className={`flex items-center gap-2 rounded-full bg-gradient-to-r ${accent} px-6 py-3 text-sm font-semibold text-white`}>
+        Начать <Icon name="ArrowRight" size={15} />
+      </button>
+      <button className="rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white/80">
+        Узнать больше
+      </button>
     </div>
-    <ImgPlaceholder accent={accent} className="h-56 w-full md:h-72" />
-  </div>
-);
+  );
+
+  if (layout === 'center') {
+    return (
+      <div className="px-8 py-20 text-center">
+        <h2 className="mx-auto font-display text-4xl font-black leading-tight text-white md:text-5xl">{heading}</h2>
+        <p className="mx-auto mt-4 max-w-md text-white/70">{subheading}</p>
+        <div className="mt-7 flex justify-center gap-3">
+          <button className={`flex items-center gap-2 rounded-full bg-gradient-to-r ${accent} px-6 py-3 text-sm font-semibold text-white`}>
+            Начать <Icon name="ArrowRight" size={15} />
+          </button>
+          <button className="rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white/80">
+            Узнать больше
+          </button>
+        </div>
+        <ImgPlaceholder accent={accent} className="mx-auto mt-10 h-56 w-full max-w-2xl" />
+      </div>
+    );
+  }
+
+  if (layout === 'overlay') {
+    return (
+      <div className="relative overflow-hidden px-8 py-24 text-center">
+        <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${accent} opacity-20`} />
+        <div className="absolute -top-16 left-1/2 -z-10 h-64 w-64 -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
+        <h2 className="mx-auto font-display text-4xl font-black leading-tight text-white md:text-6xl">{heading}</h2>
+        <p className="mx-auto mt-4 max-w-md text-white/70">{subheading}</p>
+        <div className="mt-7 flex justify-center gap-3">
+          <button className={`flex items-center gap-2 rounded-full bg-gradient-to-r ${accent} px-6 py-3 text-sm font-semibold text-white`}>
+            Начать <Icon name="ArrowRight" size={15} />
+          </button>
+          <button className="rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-medium text-white/80">
+            Узнать больше
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'split-left') {
+    return (
+      <div className="grid gap-8 px-8 py-20 md:grid-cols-2 md:items-center">
+        <ImgPlaceholder accent={accent} className="order-2 h-56 w-full md:order-1 md:h-72" />
+        <div className="order-1 text-center md:order-2 md:text-left">
+          <h2 className="font-display text-4xl font-black leading-tight text-white md:text-5xl">{heading}</h2>
+          <p className="mx-auto mt-4 max-w-md text-white/70 md:mx-0">{subheading}</p>
+          {cta}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-8 px-8 py-20 md:grid-cols-2 md:items-center">
+      <div className="text-center md:text-left">
+        <h2 className="font-display text-4xl font-black leading-tight text-white md:text-5xl">{heading}</h2>
+        <p className="mx-auto mt-4 max-w-md text-white/70 md:mx-0">{subheading}</p>
+        {cta}
+      </div>
+      <ImgPlaceholder accent={accent} className="h-56 w-full md:h-72" />
+    </div>
+  );
+};
 
 const About = ({ s, accent }: { s: SiteSection; accent: string }) => (
   <div className="grid gap-8 px-8 py-16 md:grid-cols-2 md:items-center">
@@ -292,16 +359,18 @@ const Footer = ({ site, accent }: { site: Site; accent: string }) => (
 );
 
 const LivePreview = ({ site }: { site: Site }) => {
-  const accent = getAccent(site.palette);
+  const style = getSiteStyle(site.styleKey);
+  const accent = site.styleKey ? style.accent : getAccent(site.palette);
   const heroSection = site.sections.find((s) => classify(s.tag) === 'hero');
 
   return (
     <div className="text-left">
       <Header site={site} sections={site.sections} accent={accent} />
       <Hero
-        heading={heroSection?.tag && classify(heroSection.tag) === 'hero' ? site.name : site.name || 'Название сайта'}
+        heading={site.name || 'Название сайта'}
         subheading={heroSection?.description || site.tagline || 'Tagline сайта появится здесь'}
         accent={accent}
+        layout={style.heroLayout}
       />
       {site.sections.map((s, i) => {
         const type = classify(s.tag);
