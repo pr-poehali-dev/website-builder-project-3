@@ -152,6 +152,37 @@ const Generate = () => {
             <Bubble key={i} role={m.role} text={m.text} />
           ))}
 
+          {step === 'prompt' && (
+            <div className="pl-8">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <textarea
+                  value={promptText}
+                  onChange={(e) => setPromptText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      submitIdea();
+                    }
+                  }}
+                  placeholder="Например: кофейня в центре города, тёплая атмосфера, авторские десерты…"
+                  rows={8}
+                  autoFocus
+                  className="w-full resize-none bg-transparent text-sm text-white outline-none placeholder:text-muted-foreground"
+                />
+                <div className="mt-3 flex items-center justify-end gap-3 border-t border-white/10 pt-3">
+                  <span className="text-xs text-muted-foreground">Ctrl+Enter, чтобы отправить</span>
+                  <button
+                    onClick={submitIdea}
+                    disabled={!promptText.trim()}
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-105 disabled:opacity-40"
+                  >
+                    Создать <Icon name="Send" size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {step === 'thinking' && (
             <div className="flex items-center gap-2 pl-8">
               <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-cyan-400">
@@ -209,34 +240,6 @@ const Generate = () => {
           <div ref={endRef} />
         </div>
       </div>
-
-      {step === 'prompt' && (
-        <div className="border-t border-white/10 p-4">
-          <div className="mx-auto flex max-w-2xl items-end gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-2">
-            <textarea
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  submitIdea();
-                }
-              }}
-              placeholder="Например: кофейня в центре города, тёплая атмосфера, авторские десерты…"
-              rows={1}
-              autoFocus
-              className="w-full resize-none bg-transparent px-2 py-1.5 text-sm text-white outline-none placeholder:text-muted-foreground"
-            />
-            <button
-              onClick={submitIdea}
-              disabled={!promptText.trim()}
-              className="shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 p-2.5 text-white transition-transform hover:scale-105 disabled:opacity-40"
-            >
-              <Icon name="Send" size={16} />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
