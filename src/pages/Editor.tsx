@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import Navbar from '@/components/layout/Navbar';
 import Icon from '@/components/ui/icon';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { getSite, getSites, saveSite, Site, SiteSection } from '@/lib/sites';
+import { getSite, getSites, saveSite, Site } from '@/lib/sites';
 
 const sectionColors = [
   'from-fuchsia-500/30 to-purple-600/30',
@@ -18,63 +16,79 @@ const sectionColors = [
   'from-sky-400/30 to-cyan-500/30',
 ];
 
+type ChatMessage = { role: 'user' | 'assistant'; text: string };
+
+const EDIT_SITE_URL = 'https://functions.poehali.dev/ae4b5be3-d49e-44ce-873b-a0dd746a4092';
+
 const Editor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [site, setSite] = useState<Site | null>(null);
   const [recentSites, setRecentSites] = useState<Site[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) {
       const found = getSite(id);
       setSite(found ?? null);
+      setMessages(
+        found
+          ? [{ role: 'assistant', text: `Готово! Я собрал сайт «${found.name}». Напишите, что поправить — например: «поменяй заголовок» или «добавь секцию с отзывами».` }]
+          : []
+      );
     } else {
       setRecentSites(getSites().sort((a, b) => b.updatedAt - a.updatedAt));
     }
   }, [id]);
 
-  const updateField = (field: 'name' | 'tagline', value: string) => {
-    if (!site) return;
-    setSite({ ...site, [field]: value });
-  };
-
-  const updateSection = (index: number, field: keyof SiteSection, value: string) => {
-    if (!site) return;
-    const sections = site.sections.map((s, i) => (i === index ? { ...s, [field]: value } : s));
-    setSite({ ...site, sections });
-  };
-
-  const moveSection = (index: number, direction: -1 | 1) => {
-    if (!site) return;
-    const target = index + direction;
-    if (target < 0 || target >= site.sections.length) return;
-    const sections = [...site.sections];
-    [sections[index], sections[target]] = [sections[target], sections[index]];
-    setSite({ ...site, sections });
-  };
-
-  const removeSection = (index: number) => {
-    if (!site) return;
-    setSite({ ...site, sections: site.sections.filter((_, i) => i !== index) });
-  };
-
-  const addSection = () => {
-    if (!site) return;
-    setSite({ ...site, sections: [...site.sections, { tag: 'Новая секция', description: 'Описание секции' }] });
-  };
-
-  const handleSave = () => {
-    if (!site) return;
-    const updated = { ...site, updatedAt: Date.now() };
-    saveSite(updated);
-    setSite(updated);
-    toast.success('Изменения сохранены');
-  };
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   const handlePublishClick = () => {
     if (!site) return;
     saveSite(site);
     navigate('/publication');
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading || !site) return;
+    const userText = input.trim();
+    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const resp = await fetch(EDIT_SITE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userText, site }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) {
+        setMessages((prev) => [...prev, { role: 'assistant', text: 'Не получилось внести правку. Попробуйте переформулировать запрос.' }]);
+        setLoading(false);
+        return;
+      }
+      const updated: Site = {
+        ...site,
+        name: data.name ?? site.name,
+        tagline: data.tagline ?? site.tagline,
+        palette: data.palette ?? site.palette,
+        sections: Array.isArray(data.sections) ? data.sections : site.sections,
+        updatedAt: Date.now(),
+      };
+      setSite(updated);
+      saveSite(updated);
+      setMessages((prev) => [...prev, { role: 'assistant', text: 'Готово, обновил сайт — посмотрите превью справа.' }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'assistant', text: 'Не удалось связаться с сервером. Попробуйте ещё раз.' }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!id) {
@@ -138,7 +152,7 @@ const Editor = () => {
   }
 
   return (
-    <div className="min-h-screen mesh-bg text-foreground overflow-x-hidden">
+    <div className="flex h-screen flex-col overflow-hidden mesh-bg text-foreground">
       <Navbar />
 
       <div className="border-b border-white/10">
@@ -164,76 +178,68 @@ const Editor = () => {
         </div>
       </div>
 
-      <div className="container grid gap-8 py-8 lg:grid-cols-[380px_1fr]">
-        <div className="space-y-5">
-          <div className="glass rounded-2xl p-5">
-            <label className="mb-2 block text-sm font-medium text-white">Название сайта</label>
-            <Input value={site.name} onChange={(e) => updateField('name', e.target.value)} />
-            <label className="mb-2 mt-4 block text-sm font-medium text-white">Tagline</label>
-            <Textarea value={site.tagline} onChange={(e) => updateField('tagline', e.target.value)} rows={3} />
+      <div className="container grid min-h-0 flex-1 gap-6 py-6 lg:grid-cols-[380px_1fr]">
+        <div className="glass flex min-h-0 flex-col rounded-2xl">
+          <div className="border-b border-white/10 px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Icon name="Sparkles" size={16} className="text-secondary" /> Чат с AI
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Опишите, что изменить в сайте — заголовок, текст, секции, палитру.</p>
           </div>
 
-          <div className="space-y-3">
-            {site.sections.map((s, i) => (
-              <div key={i} className="glass rounded-2xl p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Секция {i + 1}</span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => moveSection(i, -1)}
-                      disabled={i === 0}
-                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
-                    >
-                      <Icon name="ArrowUp" size={14} />
-                    </button>
-                    <button
-                      onClick={() => moveSection(i, 1)}
-                      disabled={i === site.sections.length - 1}
-                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
-                    >
-                      <Icon name="ArrowDown" size={14} />
-                    </button>
-                    <button
-                      onClick={() => removeSection(i)}
-                      className="rounded-lg p-1.5 text-rose-400 transition-colors hover:bg-rose-500/10"
-                    >
-                      <Icon name="Trash2" size={14} />
-                    </button>
-                  </div>
+          <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                    m.role === 'user'
+                      ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-white'
+                      : 'border border-white/10 bg-white/[0.04] text-white'
+                  }`}
+                >
+                  {m.text}
                 </div>
-                <Input
-                  value={s.tag}
-                  onChange={(e) => updateSection(i, 'tag', e.target.value)}
-                  className="mb-2"
-                  placeholder="Название секции"
-                />
-                <Textarea
-                  value={s.description}
-                  onChange={(e) => updateSection(i, 'description', e.target.value)}
-                  rows={2}
-                  placeholder="Описание секции"
-                />
               </div>
             ))}
-            <button
-              onClick={addSection}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/20 py-3 text-sm text-muted-foreground transition-colors hover:text-white"
-            >
-              <Icon name="Plus" size={16} /> Добавить секцию
-            </button>
+            {loading && (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground">
+                  <Icon name="Loader2" size={14} className="animate-spin text-secondary" /> Вношу правки…
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
           </div>
 
-          <button
-            onClick={handleSave}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 py-3 font-semibold text-white transition-transform hover:scale-[1.02] glow"
-          >
-            <Icon name="Save" size={16} /> Сохранить изменения
-          </button>
+          <div className="border-t border-white/10 p-4">
+            <div className="flex items-end gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-2">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder="Например: поменяй заголовок на «Свежий кофе рядом»…"
+                rows={2}
+                className="w-full resize-none bg-transparent px-2 py-1.5 text-sm text-white outline-none placeholder:text-muted-foreground"
+              />
+              <button
+                onClick={sendMessage}
+                disabled={loading || !input.trim()}
+                className="shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 p-2.5 text-white transition-transform hover:scale-105 disabled:opacity-40"
+              >
+                <Icon name="Send" size={16} />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="relative">
+        <div className="relative min-h-0">
           <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-tr from-fuchsia-500/20 to-cyan-400/20 blur-2xl" />
-          <div className="glass sticky top-24 overflow-hidden rounded-[2rem] p-4 shadow-2xl">
+          <div className="glass flex h-full flex-col overflow-hidden rounded-[2rem] p-4 shadow-2xl">
             <div className="mb-4 flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-rose-500/80" />
               <span className="h-3 w-3 rounded-full bg-amber-400/80" />
@@ -245,7 +251,7 @@ const Editor = () => {
                 </Badge>
               </span>
             </div>
-            <div className="max-h-[calc(100vh-220px)] overflow-y-auto rounded-2xl bg-background/40">
+            <div className="flex-1 overflow-y-auto rounded-2xl bg-background/40">
               <div className="border-b border-white/10 px-8 py-16 text-center">
                 <h2 className="font-display text-4xl font-black leading-tight">{site.name || 'Название сайта'}</h2>
                 <p className="mx-auto mt-4 max-w-md text-muted-foreground">{site.tagline || 'Tagline сайта появится здесь'}</p>

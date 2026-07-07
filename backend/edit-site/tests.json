@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Редактирование структуры сайта",
+      "method": "POST",
+      "path": "/",
+      "body": {"message": "Поменяй название на Test", "site": {"name": "Old", "tagline": "Old tagline", "palette": "тёплая", "sections": [{"tag": "Секция 1", "description": "Описание"}]}},
+      "expectedStatus": 200,
+      "expectedBody": {"name": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
