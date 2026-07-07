@@ -5,9 +5,10 @@ import { createSiteId, saveSite } from '@/lib/sites';
 import { siteStyles } from '@/lib/siteStyles';
 
 const GENERATE_URL = 'https://functions.poehali.dev/b374dc4b-ef26-4b6e-8152-1e0c95fe8081';
+const IDEA_REPLY_URL = 'https://functions.poehali.dev/1d1f4140-d5f7-44bb-b10c-688516703e5a';
 const genStages = ['Анализирую идею…', 'Подбираю стиль и структуру…', 'Генерирую секции и тексты…', 'Собираю макет…'];
 
-type Step = 'prompt' | 'style' | 'loading' | 'error';
+type Step = 'prompt' | 'thinking' | 'style' | 'loading' | 'error';
 type Msg = { role: 'user' | 'assistant'; text: string };
 
 const Bubble = ({ role, text }: Msg) => {
@@ -50,16 +51,29 @@ const Generate = () => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, step]);
 
-  const submitIdea = () => {
+  const submitIdea = async () => {
     if (!promptText.trim() || step !== 'prompt') return;
     const text = promptText.trim();
     setIdeaText(text);
-    setMessages((m) => [
-      ...m,
-      { role: 'user', text },
-      { role: 'assistant', text: 'Отлично! Теперь выберите стиль дизайна для сайта.' },
-    ]);
+    setMessages((m) => [...m, { role: 'user', text }]);
     setPromptText('');
+    setStep('thinking');
+
+    try {
+      const resp = await fetch(IDEA_REPLY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: text }),
+      });
+      const data = await resp.json();
+      const reply = resp.ok && data.reply ? data.reply : 'Отличная идея! Давайте подберём для неё стиль оформления.';
+      setMessages((m) => [
+        ...m,
+        { role: 'assistant', text: `${reply} Теперь выберите стиль дизайна для сайта.` },
+      ]);
+    } catch {
+      setMessages((m) => [...m, { role: 'assistant', text: 'Отличная идея! Теперь выберите стиль дизайна для сайта.' }]);
+    }
     setStep('style');
   };
 
@@ -137,6 +151,16 @@ const Generate = () => {
           {messages.map((m, i) => (
             <Bubble key={i} role={m.role} text={m.text} />
           ))}
+
+          {step === 'thinking' && (
+            <div className="flex items-center gap-2 pl-8">
+              <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-cyan-400">
+                <Icon name="Sparkles" size={12} className="text-white" />
+              </span>
+              <Icon name="Loader2" size={14} className="animate-spin text-secondary" />
+              <span className="text-sm text-muted-foreground">Обдумываю идею…</span>
+            </div>
+          )}
 
           {step === 'style' && (
             <div className="grid grid-cols-2 gap-2 pl-8">

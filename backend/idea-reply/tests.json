@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Empty prompt returns error",
+      "method": "POST",
+      "path": "/",
+      "body": {"prompt": ""},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Valid prompt returns reply",
+      "method": "POST",
+      "path": "/",
+      "body": {"prompt": "сайт для кофейни в центре города с меню и доставкой"},
+      "expectedStatus": 200,
+      "expectedBody": {"reply": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
