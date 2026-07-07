@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { createSiteId, saveSite } from '@/lib/sites';
-import { siteStyles, siteTypes } from '@/lib/siteStyles';
+import { siteStyles } from '@/lib/siteStyles';
 
 const GENERATE_URL = 'https://functions.poehali.dev/b374dc4b-ef26-4b6e-8152-1e0c95fe8081';
 const genStages = ['Анализирую идею…', 'Подбираю стиль и структуру…', 'Генерирую секции и тексты…', 'Собираю макет…'];
 
-type Step = 'type' | 'style' | 'prompt' | 'loading' | 'error';
+type Step = 'prompt' | 'style' | 'loading' | 'error';
 type Msg = { role: 'user' | 'assistant'; text: string };
 
 const Bubble = ({ role, text }: Msg) => {
@@ -35,15 +35,14 @@ const Bubble = ({ role, text }: Msg) => {
 
 const Generate = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>('type');
-  const [typeKey, setTypeKey] = useState('');
+  const [step, setStep] = useState<Step>('prompt');
   const [styleKey, setStyleKey] = useState('');
   const [promptText, setPromptText] = useState('');
-  const [lastPrompt, setLastPrompt] = useState('');
+  const [ideaText, setIdeaText] = useState('');
   const [stage, setStage] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [messages, setMessages] = useState<Msg[]>([
-    { role: 'assistant', text: 'Привет! Какой сайт хотите создать?' },
+    { role: 'assistant', text: 'Привет! Опишите сайт, который хотите создать — для кого он и что должно быть на нём.' },
   ]);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -51,31 +50,29 @@ const Generate = () => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, step]);
 
-  const selectType = (t: (typeof siteTypes)[number]) => {
-    setTypeKey(t.key);
+  const submitIdea = () => {
+    if (!promptText.trim() || step !== 'prompt') return;
+    const text = promptText.trim();
+    setIdeaText(text);
     setMessages((m) => [
       ...m,
-      { role: 'user', text: t.label },
+      { role: 'user', text },
       { role: 'assistant', text: 'Отлично! Теперь выберите стиль дизайна для сайта.' },
     ]);
+    setPromptText('');
     setStep('style');
   };
 
   const selectStyle = (s: (typeof siteStyles)[number]) => {
     setStyleKey(s.key);
-    setMessages((m) => [
-      ...m,
-      { role: 'user', text: s.label },
-      { role: 'assistant', text: 'Супер! Теперь опишите идею подробнее — что за сайт, для кого, что важно показать.' },
-    ]);
-    setStep('prompt');
+    setMessages((m) => [...m, { role: 'user', text: s.label }]);
+    setStep('loading');
+    generate(ideaText, s);
   };
 
-  const generate = async (text: string) => {
+  const generate = async (text: string, style: (typeof siteStyles)[number]) => {
     setStage(0);
     const timers = genStages.map((_, i) => setTimeout(() => setStage(i), i * 900));
-    const selectedType = siteTypes.find((t) => t.key === typeKey);
-    const selectedStyle = siteStyles.find((s) => s.key === styleKey);
 
     try {
       const resp = await fetch(GENERATE_URL, {
@@ -83,9 +80,9 @@ const Generate = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: text,
-          typeLabel: selectedType?.label || '',
-          styleLabel: selectedStyle?.label || '',
-          styleHint: selectedStyle?.hint || '',
+          typeLabel: '',
+          styleLabel: style.label,
+          styleHint: style.hint,
         }),
       });
       const data = await resp.json();
@@ -103,8 +100,7 @@ const Generate = () => {
         name: data.name,
         tagline: data.tagline,
         palette: data.palette,
-        styleKey,
-        typeKey,
+        styleKey: style.key,
         sections: data.sections,
         createdAt: now,
         updatedAt: now,
@@ -120,20 +116,7 @@ const Generate = () => {
     }
   };
 
-  const submitPrompt = () => {
-    if (!promptText.trim() || step !== 'prompt') return;
-    const text = promptText.trim();
-    setLastPrompt(text);
-    setMessages((m) => [...m, { role: 'user', text }]);
-    setPromptText('');
-    setStep('loading');
-    generate(text);
-  };
-
-  const retry = () => {
-    setPromptText(lastPrompt);
-    setStep('prompt');
-  };
+  const retry = () => setStep('style');
 
   return (
     <div className="flex h-screen flex-col overflow-hidden mesh-bg text-foreground">
@@ -154,21 +137,6 @@ const Generate = () => {
           {messages.map((m, i) => (
             <Bubble key={i} role={m.role} text={m.text} />
           ))}
-
-          {step === 'type' && (
-            <div className="grid grid-cols-2 gap-2 pl-8">
-              {siteTypes.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => selectType(t)}
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left text-sm text-white transition-colors hover:border-white/30 hover:bg-white/[0.06]"
-                >
-                  <Icon name={t.icon} size={16} className="text-secondary shrink-0" />
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          )}
 
           {step === 'style' && (
             <div className="grid grid-cols-2 gap-2 pl-8">
@@ -227,7 +195,7 @@ const Generate = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  submitPrompt();
+                  submitIdea();
                 }
               }}
               placeholder="Например: кофейня в центре города, тёплая атмосфера, авторские десерты…"
@@ -236,7 +204,7 @@ const Generate = () => {
               className="w-full resize-none bg-transparent px-2 py-1.5 text-sm text-white outline-none placeholder:text-muted-foreground"
             />
             <button
-              onClick={submitPrompt}
+              onClick={submitIdea}
               disabled={!promptText.trim()}
               className="shrink-0 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 p-2.5 text-white transition-transform hover:scale-105 disabled:opacity-40"
             >

@@ -12,8 +12,8 @@ const features = [
 ];
 
 const steps = [
-  { n: '01', t: 'Выберите тип и стиль', d: 'Тип сайта и стиль дизайна за пару кликов' },
-  { n: '02', t: 'Опишите идею', d: 'Расскажите AI, какой сайт хотите' },
+  { n: '01', t: 'Опишите идею', d: 'Расскажите AI, какой сайт хотите' },
+  { n: '02', t: 'Выберите стиль', d: 'Стиль дизайна за один клик' },
   { n: '03', t: 'Настройте под себя', d: 'Меняйте блоки в чате с AI' },
   { n: '04', t: 'Опубликуйте', d: 'Сайт онлайн за один клик' },
 ];
@@ -76,18 +76,11 @@ const Index = () => {
               <span className="h-3 w-3 rounded-full bg-emerald-400/80" />
               <span className="ml-3 text-xs text-muted-foreground">AI-конструктор</span>
             </div>
-            <label className="mb-3 flex items-center gap-2 text-sm font-medium text-white">
-              <Icon name="LayoutGrid" size={16} className="text-secondary" /> Какой сайт хотите создать?
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-white">
+              <Icon name="Wand2" size={16} className="text-secondary" /> Опишите сайт, который хотите создать
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {['Бизнес и услуги', 'Интернет-магазин', 'Портфолио', 'Блог и медиа'].map((t) => (
-                <span
-                  key={t}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left text-sm text-white"
-                >
-                  {t}
-                </span>
-              ))}
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-muted-foreground">
+              Например: кофейня в центре города, тёплая атмосфера, авторские десерты…
             </div>
             <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-400 py-3 text-sm font-semibold text-white">
               Начать <Icon name="ArrowRight" size={16} />
