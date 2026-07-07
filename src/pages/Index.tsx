@@ -320,9 +320,9 @@ const Index = () => {
       <footer className="border-t border-white/10 py-10">
         <div className="container flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-2 font-display font-bold text-white">
-            <Icon name="Boxes" size={18} className="text-secondary" /> SaitSam
+            <Icon name="Boxes" size={18} className="text-secondary" /> EasySait
           </div>
-          <p>© 2026 SaitSam. Конструктор сайтов на базе AI.</p>
+          <p>© 2026 EasySait. Конструктор сайтов на базе AI.</p>
           <div className="flex gap-4">
             <Icon name="Send" size={18} className="cursor-pointer transition-colors hover:text-white" />
             <Icon name="Github" size={18} className="cursor-pointer transition-colors hover:text-white" />
