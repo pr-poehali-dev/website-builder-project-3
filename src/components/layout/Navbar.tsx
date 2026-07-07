@@ -20,7 +20,7 @@ const Navbar = () => {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-cyan-400 glow">
             <Icon name="Boxes" size={20} className="text-white" />
           </span>
-          Konstr<span className="text-gradient">AI</span>
+          Sait<span className="text-gradient">Sam</span>
         </Link>
         <nav className="hidden items-center gap-1 lg:flex">
           {navItems.map((item) => (

@@ -103,7 +103,7 @@ const Publication = () => {
                 <label className="mb-2 block text-sm font-medium text-white">Поддомен</label>
                 <div className="flex items-center gap-2">
                   <Input value={subdomain} onChange={(e) => setSubdomain(slugify(e.target.value))} placeholder="mysite" />
-                  <span className="whitespace-nowrap text-sm text-muted-foreground">.konstrai.app</span>
+                  <span className="whitespace-nowrap text-sm text-muted-foreground">.saitsam.app</span>
                 </div>
 
                 <button
@@ -116,7 +116,7 @@ const Publication = () => {
                 {selected.published && (
                   <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm">
                     <p className="text-muted-foreground">Ваш сайт доступен по адресу:</p>
-                    <p className="mt-1 font-medium text-gradient">https://{subdomain}.konstrai.app</p>
+                    <p className="mt-1 font-medium text-gradient">https://{subdomain}.saitsam.app</p>
                   </div>
                 )}
               </div>

@@ -12,7 +12,7 @@ export type Site = {
   domain?: string;
 };
 
-const STORAGE_KEY = 'konstrai_sites';
+const STORAGE_KEY = 'saitsam_sites';
 
 export const createSiteId = (): string => crypto.randomUUID();
 
