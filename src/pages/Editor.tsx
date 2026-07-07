@@ -73,7 +73,7 @@ const Editor = () => {
       };
       setSite(updated);
       saveSite(updated);
-      setMessages((prev) => [...prev, { role: 'assistant', text: 'Готово, обновил сайт — посмотрите превью справа.' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', text: data.reply || 'Готово, обновил сайт — посмотрите превью справа.' }]);
     } catch {
       setMessages((prev) => [...prev, { role: 'assistant', text: 'Не удалось связаться с сервером. Попробуйте ещё раз.' }]);
     } finally {
